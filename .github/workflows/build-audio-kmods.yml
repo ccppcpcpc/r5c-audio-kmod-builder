@@ -232,13 +232,11 @@ jobs:
           kmod-veth
           kmod-wireguard
           EOF
-            echo 'CONFIG_PACKAGE_kmod-media-core=m'
-            echo 'CONFIG_PACKAGE_kmod-sound-core=m'
-            echo 'CONFIG_PACKAGE_kmod-usb-audio=m'
           } > .config
           make defconfig
+          cp .config .config.vendor-reconstruction
           echo "Selected installed kmods: $(grep -c '^CONFIG_PACKAGE_kmod-.*=y' .config)"
-          grep -E '^(CONFIG_TARGET_rockchip|CONFIG_PACKAGE_kmod-(media-core|sound-core|usb-audio))' .config
+          grep -E '^CONFIG_TARGET_rockchip' .config
 
       - name: Download sources
         working-directory: source
@@ -249,15 +247,39 @@ jobs:
         run: |
           make tools/install -j"$(nproc)" || make tools/install -j1 V=s
           make toolchain/install -j"$(nproc)" || make toolchain/install -j1 V=s
+
+          # First configure the kernel exactly from the packages installed by the
+          # vendor image. This is the hash that can be compared with opkg's
+          # running-kernel dependency hash. Enabling any new kmod later changes
+          # OpenWrt's package hash by design.
+          make target/linux/prepare -j"$(nproc)" || make target/linux/prepare -j1 V=s
+          base_vermagic_file="$(find build_dir -path '*/linux-6.1.84/.vermagic' -print -quit)"
+          base_config_set="$(find build_dir -path '*/linux-6.1.84/.config.set' -print -quit)"
+          test -n "$base_vermagic_file"
+          test -n "$base_config_set"
+          cp "$base_vermagic_file" "$GITHUB_WORKSPACE/vendor-base-abi-hash.txt"
+          cp "$base_config_set" "$GITHUB_WORKSPACE/vendor-base-kernel-config.set"
+          base_hash="$(cat "$base_vermagic_file")"
+          echo "Expected running-firmware ABI hash: d7386d74a3619969897951aecec30700"
+          echo "Reconstructed vendor-base hash:     $base_hash"
+          if [ "$base_hash" != 'd7386d74a3619969897951aecec30700' ]; then
+            echo "::warning::Vendor-base kernel configuration still differs; do not load this run's modules"
+          fi
+
+          cp .config.vendor-reconstruction .config
+          cat >> .config <<'EOF'
+          CONFIG_PACKAGE_kmod-media-core=m
+          CONFIG_PACKAGE_kmod-sound-core=m
+          CONFIG_PACKAGE_kmod-usb-audio=m
+          EOF
+          make defconfig
+          grep -E '^CONFIG_PACKAGE_kmod-(media-core|sound-core|usb-audio)' .config
+          make target/linux/clean
           make target/linux/compile -j"$(nproc)" || make target/linux/compile -j1 V=s
           vermagic_file="$(find build_dir -path '*/linux-6.1.84/.vermagic' -print -quit)"
           test -n "$vermagic_file"
           actual_hash="$(cat "$vermagic_file")"
-          echo "Expected running-firmware ABI hash: d7386d74a3619969897951aecec30700"
-          echo "Reconstructed build ABI hash:       $actual_hash"
-          if [ "$actual_hash" != 'd7386d74a3619969897951aecec30700' ]; then
-            echo "::warning::Kernel ABI hash still differs; do not load this run's modules"
-          fi
+          echo "Audio-enabled package ABI hash:     $actual_hash"
           make package/kernel/linux/compile -j"$(nproc)" || make package/kernel/linux/compile -j1 V=s
 
       - name: Collect IPKs and raw modules
@@ -314,6 +336,8 @@ jobs:
           test -n "$vermagic_file"
           cp "$config_set" "$out/kernel-config.set"
           cp "$vermagic_file" "$out/kernel-abi-hash.txt"
+          cp "$GITHUB_WORKSPACE/vendor-base-kernel-config.set" "$out/vendor-base-kernel-config.set"
+          cp "$GITHUB_WORKSPACE/vendor-base-abi-hash.txt" "$out/vendor-base-abi-hash.txt"
           git rev-parse HEAD > "$out/source-commit.txt"
           tar -C "$out/root" -czf "$out/audio-kmods-6.1.84-aarch64.tar.gz" .
           sha256sum "$out"/ipk/*.ipk "$out/audio-kmods-6.1.84-aarch64.tar.gz" > "$out/SHA256SUMS"
