@@ -80,7 +80,12 @@ jobs:
             tmp="$(mktemp -d)"
             (
               cd "$tmp"
-              ar x "$ipk"
+              file "$ipk"
+              if ar t "$ipk" >/dev/null 2>&1; then
+                ar x "$ipk"
+              else
+                tar -xf "$ipk"
+              fi
               data_archive="$(find . -maxdepth 1 -type f -name 'data.tar.*' -print -quit)"
               test -n "$data_archive"
               tar -xf "$data_archive" -C "$out/root"
