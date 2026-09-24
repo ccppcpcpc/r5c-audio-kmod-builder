@@ -34,18 +34,210 @@ jobs:
           git checkout 7727540c1c9193302b9cfc61212b0cfb09a965b5
           test "$(git rev-parse HEAD)" = "7727540c1c9193302b9cfc61212b0cfb09a965b5"
 
-      - name: Configure only the required kernel packages
+      - name: Reconstruct the installed kernel package set
         working-directory: source
         run: |
-          cat > .config <<'EOF'
-          CONFIG_TARGET_rockchip=y
-          CONFIG_TARGET_rockchip_armv8=y
-          CONFIG_TARGET_rockchip_armv8_DEVICE_friendlyarm_nanopi-r5c=y
-          CONFIG_PACKAGE_kmod-media-core=m
-          CONFIG_PACKAGE_kmod-sound-core=m
-          CONFIG_PACKAGE_kmod-usb-audio=m
+          set -euo pipefail
+          {
+            echo 'CONFIG_TARGET_rockchip=y'
+            echo 'CONFIG_TARGET_rockchip_armv8=y'
+            echo 'CONFIG_TARGET_rockchip_armv8_DEVICE_friendlyarm_nanopi-r5c=y'
+            while IFS= read -r package; do
+              test -z "$package" || echo "CONFIG_PACKAGE_${package}=y"
+            done <<'EOF'
+          kmod-asn1-decoder
+          kmod-asn1-encoder
+          kmod-batman-adv
+          kmod-br-netfilter
+          kmod-cfg80211
+          kmod-crypto-acompress
+          kmod-crypto-aead
+          kmod-crypto-arc4
+          kmod-crypto-authenc
+          kmod-crypto-cbc
+          kmod-crypto-ccm
+          kmod-crypto-cmac
+          kmod-crypto-crc32c
+          kmod-crypto-ctr
+          kmod-crypto-cts
+          kmod-crypto-deflate
+          kmod-crypto-des
+          kmod-crypto-ecb
+          kmod-crypto-echainiv
+          kmod-crypto-gcm
+          kmod-crypto-gf128
+          kmod-crypto-ghash
+          kmod-crypto-hash
+          kmod-crypto-hmac
+          kmod-crypto-kpp
+          kmod-crypto-lib-chacha20
+          kmod-crypto-lib-chacha20poly1305
+          kmod-crypto-lib-curve25519
+          kmod-crypto-lib-poly1305
+          kmod-crypto-manager
+          kmod-crypto-md4
+          kmod-crypto-md5
+          kmod-crypto-null
+          kmod-crypto-rng
+          kmod-crypto-seqiv
+          kmod-crypto-sha1
+          kmod-crypto-sha256
+          kmod-crypto-sha512
+          kmod-crypto-user
+          kmod-cryptodev
+          kmod-dax
+          kmod-dm
+          kmod-dnsresolver
+          kmod-dummy
+          kmod-fast-classifier
+          kmod-fs-btrfs
+          kmod-fs-cifs
+          kmod-fs-exfat
+          kmod-fs-exportfs
+          kmod-fs-ext4
+          kmod-fs-ksmbd
+          kmod-fs-nfs
+          kmod-fs-nfs-common
+          kmod-fs-nfs-common-rpcsec
+          kmod-fs-nfs-v4
+          kmod-fs-nfsd
+          kmod-fs-ntfs3
+          kmod-fs-smbfs-common
+          kmod-fs-vfat
+          kmod-fuse
+          kmod-gpio-button-hotplug
+          kmod-gre
+          kmod-hwmon-core
+          kmod-ifb
+          kmod-inet-diag
+          kmod-input-core
+          kmod-ip6tables
+          kmod-ip6tables-extra
+          kmod-ipsec
+          kmod-ipsec4
+          kmod-ipsec6
+          kmod-ipt-conntrack
+          kmod-ipt-conntrack-extra
+          kmod-ipt-core
+          kmod-ipt-extra
+          kmod-ipt-filter
+          kmod-ipt-fullconenat
+          kmod-ipt-ipopt
+          kmod-ipt-iprange
+          kmod-ipt-ipsec
+          kmod-ipt-ipset
+          kmod-ipt-nat
+          kmod-ipt-nat-extra
+          kmod-ipt-nat6
+          kmod-ipt-physdev
+          kmod-ipt-raw
+          kmod-ipt-socket
+          kmod-ipt-tproxy
+          kmod-iptunnel
+          kmod-iptunnel4
+          kmod-iptunnel6
+          kmod-iwlwifi
+          kmod-keys-encrypted
+          kmod-keys-trusted
+          kmod-l2tp
+          kmod-lib-crc-ccitt
+          kmod-lib-crc16
+          kmod-lib-crc32c
+          kmod-lib-lzo
+          kmod-lib-raid6
+          kmod-lib-textsearch
+          kmod-lib-xor
+          kmod-lib-zlib-deflate
+          kmod-lib-zlib-inflate
+          kmod-lib-zstd
+          kmod-mac80211
+          kmod-macvlan
+          kmod-md-mod
+          kmod-md-raid0
+          kmod-md-raid1
+          kmod-md-raid10
+          kmod-mmc
+          kmod-mppe
+          kmod-mt76
+          kmod-mt76-connac
+          kmod-mt76-core
+          kmod-mt76-sdio
+          kmod-mt76-usb
+          kmod-mt7603
+          kmod-mt7615-common
+          kmod-mt7615e
+          kmod-mt7622-firmware
+          kmod-mt76x02-common
+          kmod-mt76x02-usb
+          kmod-mt76x2
+          kmod-mt76x2-common
+          kmod-mt76x2u
+          kmod-mt7921-common
+          kmod-mt7921-firmware
+          kmod-mt7921e
+          kmod-mt7921s
+          kmod-mt7921u
+          kmod-mt7922-firmware
+          kmod-mt792x-common
+          kmod-mt792x-usb
+          kmod-netlink-diag
+          kmod-nf-conntrack
+          kmod-nf-conntrack-netlink
+          kmod-nf-conntrack6
+          kmod-nf-ipt
+          kmod-nf-ipt6
+          kmod-nf-ipvs
+          kmod-nf-log
+          kmod-nf-log6
+          kmod-nf-nat
+          kmod-nf-nat6
+          kmod-nf-nathelper
+          kmod-nf-nathelper-extra
+          kmod-nf-reject
+          kmod-nf-reject6
+          kmod-nf-socket
+          kmod-nf-tproxy
+          kmod-nfnetlink
+          kmod-nls-base
+          kmod-nls-cp437
+          kmod-nls-iso8859-1
+          kmod-nls-utf8
+          kmod-nvme
+          kmod-oaf
+          kmod-oid-registry
+          kmod-ppp
+          kmod-pppoe
+          kmod-pppol2tp
+          kmod-pppox
+          kmod-r8125
+          kmod-random-core
+          kmod-rfkill
+          kmod-sched
+          kmod-sched-cake
+          kmod-sched-core
+          kmod-scsi-core
+          kmod-shortcut-fe
+          kmod-sit
+          kmod-slhc
+          kmod-tcp-bbr
+          kmod-tpm
+          kmod-tun
+          kmod-udptunnel4
+          kmod-udptunnel6
+          kmod-usb-core
+          kmod-usb-printer
+          kmod-usb-storage
+          kmod-usb-storage-extras
+          kmod-usb-storage-uas
+          kmod-veth
+          kmod-wireguard
           EOF
+            echo 'CONFIG_PACKAGE_kmod-media-core=m'
+            echo 'CONFIG_PACKAGE_kmod-sound-core=m'
+            echo 'CONFIG_PACKAGE_kmod-usb-audio=m'
+          } > .config
           make defconfig
+          echo "Selected installed kmods: $(grep -c '^CONFIG_PACKAGE_kmod-.*=y' .config)"
           grep -E '^(CONFIG_TARGET_rockchip|CONFIG_PACKAGE_kmod-(media-core|sound-core|usb-audio))' .config
 
       - name: Download sources
@@ -58,6 +250,14 @@ jobs:
           make tools/install -j"$(nproc)" || make tools/install -j1 V=s
           make toolchain/install -j"$(nproc)" || make toolchain/install -j1 V=s
           make target/linux/compile -j"$(nproc)" || make target/linux/compile -j1 V=s
+          vermagic_file="$(find build_dir -path '*/linux-6.1.84/.vermagic' -print -quit)"
+          test -n "$vermagic_file"
+          actual_hash="$(cat "$vermagic_file")"
+          echo "Expected running-firmware ABI hash: d7386d74a3619969897951aecec30700"
+          echo "Reconstructed build ABI hash:       $actual_hash"
+          if [ "$actual_hash" != 'd7386d74a3619969897951aecec30700' ]; then
+            echo "::warning::Kernel ABI hash still differs; do not load this run's modules"
+          fi
           make package/kernel/linux/compile -j"$(nproc)" || make package/kernel/linux/compile -j1 V=s
 
       - name: Collect IPKs and raw modules
@@ -108,6 +308,12 @@ jobs:
           fi
 
           cp .config "$out/openwrt-build.config"
+          config_set="$(find build_dir -path '*/linux-6.1.84/.config.set' -print -quit)"
+          vermagic_file="$(find build_dir -path '*/linux-6.1.84/.vermagic' -print -quit)"
+          test -n "$config_set"
+          test -n "$vermagic_file"
+          cp "$config_set" "$out/kernel-config.set"
+          cp "$vermagic_file" "$out/kernel-abi-hash.txt"
           git rev-parse HEAD > "$out/source-commit.txt"
           tar -C "$out/root" -czf "$out/audio-kmods-6.1.84-aarch64.tar.gz" .
           sha256sum "$out"/ipk/*.ipk "$out/audio-kmods-6.1.84-aarch64.tar.gz" > "$out/SHA256SUMS"
