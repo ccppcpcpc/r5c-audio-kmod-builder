@@ -12,6 +12,9 @@ jobs:
     timeout-minutes: 300
 
     steps:
+      - name: Check out this repository
+        uses: actions/checkout@v4
+
       - name: Free disk space
         run: |
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc
@@ -338,6 +341,10 @@ jobs:
           cp "$vermagic_file" "$out/kernel-abi-hash.txt"
           cp "$GITHUB_WORKSPACE/vendor-base-kernel-config.set" "$out/vendor-base-kernel-config.set"
           cp "$GITHUB_WORKSPACE/vendor-base-abi-hash.txt" "$out/vendor-base-abi-hash.txt"
+          cp "$GITHUB_WORKSPACE/scripts/test-r5c-audio.sh" "$out/test-r5c-audio.sh"
+          cp "$GITHUB_WORKSPACE/scripts/install-persistent.sh" "$out/install-persistent.sh"
+          cp "$GITHUB_WORKSPACE/docs/deployment.zh-CN.md" "$out/deployment.zh-CN.md"
+          chmod +x "$out/test-r5c-audio.sh" "$out/install-persistent.sh"
           git rev-parse HEAD > "$out/source-commit.txt"
           tar -C "$out/root" -czf "$out/audio-kmods-6.1.84-aarch64.tar.gz" .
           sha256sum "$out"/ipk/*.ipk "$out/audio-kmods-6.1.84-aarch64.tar.gz" > "$out/SHA256SUMS"
@@ -346,7 +353,7 @@ jobs:
       - name: Upload audio modules
         uses: actions/upload-artifact@v4
         with:
-          name: r5c-audio-kmods-6.1.84
+          name: r5c-audio-kmods-6.1.84-untested-build
           path: artifact/
           if-no-files-found: error
           retention-days: 30
